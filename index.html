@@ -895,7 +895,7 @@
         // Toast notification
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
-            toast.className = `toast show`;
+            toast.className = 'toast show';
             toast.innerHTML = `
                 <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
                 <span>${message}</span>
@@ -974,11 +974,17 @@
             showToast('Joke downloaded successfully! 📥');
         }
 
-        // Add to favorites (localStorage)
+        // Add to favorites
         function favoriteJoke() {
             if (!currentJoke) return;
             
-            const favorites = JSON.parse(localStorage.getItem('favoriteJokes') || '[]');
+            let favorites = [];
+            try {
+                favorites = JSON.parse(localStorage.getItem('favoriteJokes') || '[]');
+            } catch (e) {
+                favorites = [];
+            }
+            
             const jokeObj = {
                 id: Date.now(),
                 joke: currentJoke,
@@ -987,7 +993,7 @@
             };
             
             favorites.unshift(jokeObj);
-            localStorage.setItem('favoriteJokes', JSON.stringify(favorites.slice(0, 50))); // Keep only 50 favorites
+            localStorage.setItem('favoriteJokes', JSON.stringify(favorites.slice(0, 50)));
             
             showToast('Joke added to favorites! ❤️');
         }
@@ -1021,17 +1027,14 @@
             getJokeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
             
             try {
-                // Try multiple methods and endpoints
-                let response;
                 let jokeData;
                 
-                // Method 1: Direct API call with CORS headers
+                // Try API first
                 try {
-                    response = await fetch(`https://v2.jokeapi.dev/joke/${selectedCategory}?blacklistFlags=nsfw,religious,political,racist,sexist,explicit&format=json`, {
+                    const response = await fetch(`https://v2.jokeapi.dev/joke/${selectedCategory}?blacklistFlags=nsfw,religious,political,racist,sexist,explicit&format=json`, {
                         method: 'GET',
                         headers: {
                             'Accept': 'application/json',
-                            'Content-Type': 'application/json',
                         },
                         mode: 'cors'
                     });
@@ -1041,26 +1044,12 @@
                     } else {
                         throw new Error('API response not ok');
                     }
-                } catch (corsError) {
-                    console.log('CORS method failed, trying alternative...');
-                    
-                    // Method 2: Try with different endpoint format
-                    try {
-                        response = await fetch(`https://v2.jokeapi.dev/joke/${selectedCategory}?format=json&blacklistFlags=nsfw,religious,political,racist,sexist,explicit&safe-mode`);
-                        
-                        if (response.ok) {
-                            jokeData = await response.json();
-                        } else {
-                            throw new Error('Alternative API failed');
-                        }
-                    } catch (altError) {
-                        // Method 3: Use backup jokes if API fails
-                        console.log('API unavailable, using premium backup jokes...');
-                        jokeData = getBackupJoke();
-                    }
+                } catch (error) {
+                    console.log('API unavailable, using backup jokes...');
+                    jokeData = getBackupJoke();
                 }
                 
-                // Display joke with animation
+                // Display joke
                 let jokeContent = '';
                 if (jokeData.type === 'single') {
                     jokeContent = jokeData.joke;
@@ -1070,15 +1059,14 @@
                     jokeContent = jokeData.joke || jokeData.content;
                 }
                 
-                // Store current joke for sharing/copying
+                // Store current joke
                 currentJoke = jokeContent;
                 currentCategory = jokeData.category || selectedCategory;
                 
-                // Add typewriter effect
+                // Show content with typewriter effect
                 jokeText.textContent = '';
                 jokeCategory.innerHTML = `<i class="fas fa-tag"></i> ${currentCategory}`;
                 
-                // Show content with fade in
                 loading.style.display = 'none';
                 jokeText.style.display = 'block';
                 jokeCategory.style.display = 'inline-flex';
@@ -1096,9 +1084,8 @@
                 typeWriter();
                 
             } catch (error) {
-                console.error('All methods failed:', error);
+                console.error('Error:', error);
                 
-                // Show backup joke
                 const backupJoke = getBackupJoke();
                 currentJoke = backupJoke.joke;
                 currentCategory = backupJoke.category;
@@ -1122,231 +1109,8 @@
                     { joke: "Why do programmers prefer dark mode? Because light attracts bugs! 🐛", category: "Programming" },
                     { joke: "There are only 10 types of people in the world: those who understand binary and those who don't.", category: "Programming" },
                     { joke: "Why did the programmer quit his job? He didn't get arrays! 💰", category: "Programming" },
-                    { joke: "How many programmers does it take to change a light bulb?         function showAbout() {
-            const aboutText = `🎭 JokeAPI Pro - The Ultimate Joke Generator
-
-🏆 THE WORLD'S LEADING platform for high-quality jokes:
-
-📊 STATISTICS:
-• 10,000+ jokes across multiple categories
-• 50,000+ active daily users
-• Fresh jokes updated daily
-• 7 popular categories (Programming, General, Dark, Pun, Spooky, Christmas)
-
-🚀 PREMIUM FEATURES:
-• Real-time API integration with JokeAPI v2
-• Smart backup system for 100% reliability
-• Modern glassmorphism UI design
-• Responsive & mobile-friendly design
-• Automatic safe content filtering
-• Typewriter animation effects
-• Copy, Share, Download & Favorite jokes
-• SEO optimized for viral content
-
-🛡️ ADVANCED TECHNOLOGY:
-• Advanced CORS handling
-• Multiple fallback methods
-• Premium UI/UX with particle animations
-• Progressive Web App (PWA) ready
-• Social media integration
-• Local storage for favorites
-
-💎 BUILT FOR:
-• Developers who need coding breaks with laughter
-• Content creators seeking humor inspiration
-• Social media managers needing viral content  
-• Anyone who loves quality humor
-
-🌟 WHY CHOOSE US:
-✅ 100% Free forever
-✅ No annoying ads
-✅ Daily content updates
-✅ Modern & user-friendly interface
-✅ High-quality & non-offensive jokes
-✅ All device support (mobile, tablet, desktop)
-
-🔥 Join 50K+ users already enjoying the best jokes on the web!
-
-#FunnyJokes #ProgrammingHumor #JokeGenerator`;
-
-            alert(aboutText);
-        }
-
-        function showPrivacy() {
-            const privacyText = `🔒 Privacy Policy - JokeAPI Pro
-
-🛡️ PRIVACY COMMITMENT:
-Your privacy is our top priority. We maintain the highest standards of data protection.
-
-📊 DATA COLLECTION:
-• ❌ We do NOT collect personal information
-• ❌ No tracking cookies used
-• ❌ No registration or accounts required
-• ✅ Only anonymous usage statistics for service improvement
-
-🌐 THIRD-PARTY SERVICES:
-• JokeAPI v2 for joke content (external service)
-• FontAwesome for icons (CDN)
-• ❌ NO social media tracking pixels
-• ❌ NO invasive ads or analytics
-
-🔐 DATA SECURITY:
-• All connections use HTTPS encryption
-• No data stored on our servers
-• Client-side processing only
-• No user tracking or profiling
-
-💾 LOCAL STORAGE:
-• Favorite jokes stored in your browser (localStorage)
-• Data never sent to servers
-• You can delete data anytime
-• No synchronization with external accounts
-
-📧 CONTACT US:
-For privacy concerns: contact@vinnesia.my.id
-
-📅 LAST UPDATED: August 2025
-
-🤝 TRANSPARENCY:
-We're committed to full transparency. No hidden agendas, no secret data collection. Our goal is simple: provide quality entertainment for everyone.
-
-💡 YOUR RIGHTS:
-✅ Use the service without providing personal data
-✅ Delete local data anytime
-✅ Request information about data usage
-✅ Report privacy concerns
-
-Your trust is invaluable. We're committed to protecting privacy while delivering the best service.`;
-
-            alert(privacyText);
-        } tentang penggunaan data
-✅ Melaporkan masalah privasi
-
-Kepercayaan Anda sangat berharga. Kami berkomitmen menjaga privasi sambil memberikan layanan terbaik.`;
-
-            alert(privacyText);
-        }
-
-        // Initialize particles and animations
-        document.addEventListener('DOMContentLoaded', function() {
-            createParticles();
-            
-            // Add fade-in animation to elements
-            const fadeElements = document.querySelectorAll('.fade-in');
-            fadeElements.forEach((el, index) => {
-                el.style.animationDelay = `${index * 0.2}s`;
-            });
-            
-            // Auto-generate first joke after page load
-            setTimeout(() => {
-                getJoke();
-            }, 2000);
-
-            // Animate stats numbers
-            setTimeout(() => {
-                animateStats();
-            }, 1000);
-        });
-
-        // Animate statistics numbers
-        function animateStats() {
-            const statNumbers = document.querySelectorAll('.stat-number');
-            statNumbers.forEach(stat => {
-                const target = stat.textContent;
-                const isNumber = target.replace(/[^\d]/g, '');
-                if (isNumber) {
-                    let current = 0;
-                    const increment = parseInt(isNumber) / 50;
-                    const timer = setInterval(() => {
-                        current += increment;
-                        if (current >= parseInt(isNumber)) {
-                            stat.textContent = target;
-                            clearInterval(timer);
-                        } else {
-                            stat.textContent = Math.floor(current) + target.replace(/[\d]/g, '').slice(-1);
-                        }
-                    }, 50);
-                }
-            });
-        }
-
-        // Add smooth scrolling
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth'
-                    });
-                }
-            });
-        });
-
-        // Add keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-                    e.preventDefault();
-                    getJoke();
-                }
-            }
-            
-            // Ctrl/Cmd + C to copy joke
-            if ((e.ctrlKey || e.metaKey) && e.key === 'c' && currentJoke) {
-                e.preventDefault();
-                copyJoke();
-            }
-            
-            // Ctrl/Cmd + S to share joke
-            if ((e.ctrlKey || e.metaKey) && e.key === 's' && currentJoke) {
-                e.preventDefault();
-                shareJoke();
-            }
-        });
-
-        // Add button click effects
-        document.querySelectorAll('button').forEach(button => {
-            button.addEventListener('click', function() {
-                this.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    this.style.transform = '';
-                }, 150);
-            });
-        });
-
-        // Track popular categories for analytics
-        function trackCategoryUsage(category) {
-            const usage = JSON.parse(localStorage.getItem('categoryUsage') || '{}');
-            usage[category] = (usage[category] || 0) + 1;
-            localStorage.setItem('categoryUsage', JSON.stringify(usage));
-        }
-
-        // Show favorite jokes (could be expanded to a modal)
-        function showFavorites() {
-            const favorites = JSON.parse(localStorage.getItem('favoriteJokes') || '[]');
-            if (favorites.length === 0) {
-                showToast('No favorite jokes yet! ❤️', 'info');
-                return;
-            }
-            
-            let favoritesText = '❤️ YOUR FAVORITE JOKES:\n\n';
-            favorites.slice(0, 5).forEach((fav, index) => {
-                favoritesText += `${index + 1}. [${fav.category}] ${fav.joke}\n\n`;
-            });
-            favoritesText += `\nTotal: ${favorites.length} favorite jokes`;
-            
-            alert(favoritesText);
-        }
-
-        // Add to navbar if needed
-        document.querySelector('.nav-links').innerHTML += `
-            <a href="#" onclick="showFavorites()"><i class="fas fa-heart"></i> Favorites</a>
-        `;
-    </script>
-</body>
-</html>, that's a hardware problem!", category: "Programming" },
-                    { setup: "Why do Java developers wear glasses?", delivery: "Because they can't C#! 👓", category: "Programming" },
+                    { joke: "How many programmers does it take to change a light bulb? None, that's a hardware problem!", category: "Programming" },
+                    { joke: "Why do Java developers wear glasses? Because they can't C#! 👓", category: "Programming" },
                     { joke: "A SQL query goes into a bar, walks up to two tables and asks: 'Can I join you?' 🍺", category: "Programming" },
                     { joke: "Why did the developer go broke? Because he used up all his cache! 💸", category: "Programming" }
                 ],
@@ -1386,14 +1150,6 @@ Kepercayaan Anda sangat berharga. Kami berkomitmen menjaga privasi sambil member
             const categoryJokes = backupJokes[selectedCategory] || backupJokes['Misc'];
             const randomJoke = categoryJokes[Math.floor(Math.random() * categoryJokes.length)];
             
-            if (randomJoke.setup && randomJoke.delivery) {
-                return {
-                    type: 'twopart',
-                    joke: `${randomJoke.setup}\n\n${randomJoke.delivery}`,
-                    category: randomJoke.category
-                };
-            }
-            
             return {
                 type: 'single',
                 joke: randomJoke.joke,
@@ -1404,31 +1160,29 @@ Kepercayaan Anda sangat berharga. Kami berkomitmen menjaga privasi sambil member
         function showAbout() {
             const aboutText = `🎭 JokeAPI Pro - Premium Joke Generator
 
-✨ Platform terdepan untuk jokes berkualitas tinggi dengan teknologi modern:
+✨ Platform terdepan untuk jokes berkualitas tinggi:
 
 🚀 FEATURES:
-• Multiple joke categories (Programming, General, Dark, Pun, Spooky, Christmas)
-• Real-time API integration dengan JokeAPI v2
-• Smart backup system untuk reliability 100%
-• Modern glassmorphism UI design
-• Responsive & mobile-friendly
+• Multiple joke categories
+• Real-time API integration
+• Smart backup system
+• Modern glassmorphism UI
+• Responsive design
 • Safe content filtering
-• Typewriter animation effects
+• Typewriter animations
 
 🛡️ TECHNOLOGY:
 • Advanced CORS handling
 • Multiple fallback methods
 • Premium UI/UX design
-• Particle animation system
-• Gradient animations
+• Particle animations
 
 💎 MADE FOR:
-• Developers who need coding breaks
-• Content creators seeking inspiration  
-• Anyone who loves quality humor
-• Professional presentations
+• Developers
+• Content creators
+• Anyone who loves humor
 
-🌟 Experience premium joke generation today!`;
+🌟 Experience premium jokes today!`;
 
             alert(aboutText);
         }
@@ -1436,66 +1190,87 @@ Kepercayaan Anda sangat berharga. Kami berkomitmen menjaga privasi sambil member
         function showPrivacy() {
             const privacyText = `🔒 Privacy Policy - JokeAPI Pro
 
-🛡️ COMMITMENT TO PRIVACY:
-Your privacy is our top priority. We maintain the highest standards of data protection.
+🛡️ Your privacy is our priority.
 
 📊 DATA COLLECTION:
-• We do NOT collect personal information
-• No cookies for tracking purposes
-• No user accounts or registration required
-• Anonymous usage statistics only (for improvement)
+• No personal information collected
+• No tracking cookies
+• Anonymous usage statistics only
 
 🌐 THIRD-PARTY SERVICES:
-• JokeAPI v2 for joke content (external service)
-• FontAwesome for icons (CDN)
-• No social media tracking pixels
+• JokeAPI v2 for content
+• FontAwesome for icons
 
 🔐 DATA SECURITY:
-• All connections use HTTPS encryption
-• No data stored on our servers
+• HTTPS encryption
+• No server data storage
 • Client-side processing only
-• No user tracking or profiling
 
-📧 CONTACT:
-For privacy concerns: contact@vinnesia.my.id
+📧 Contact: contact@vinnesia.my.id
 
-🆕 Last updated: August 2025
-
-Your trust matters to us. We're committed to transparency and user privacy protection.`;
+Your trust matters to us.`;
 
             alert(privacyText);
         }
 
-        // Initialize particles and animations
+        function showFavorites() {
+            let favorites = [];
+            try {
+                favorites = JSON.parse(localStorage.getItem('favoriteJokes') || '[]');
+            } catch (e) {
+                favorites = [];
+            }
+            
+            if (favorites.length === 0) {
+                showToast('No favorite jokes yet! ❤️', 'info');
+                return;
+            }
+            
+            let favoritesText = '❤️ YOUR FAVORITE JOKES:\n\n';
+            favorites.slice(0, 5).forEach((fav, index) => {
+                favoritesText += `${index + 1}. [${fav.category}] ${fav.joke}\n\n`;
+            });
+            favoritesText += `\nTotal: ${favorites.length} favorite jokes`;
+            
+            alert(favoritesText);
+        }
+
+        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             createParticles();
             
-            // Add fade-in animation to elements
+            // Add fade-in animation
             const fadeElements = document.querySelectorAll('.fade-in');
             fadeElements.forEach((el, index) => {
                 el.style.animationDelay = `${index * 0.2}s`;
             });
             
-            // Auto-generate first joke after page load
+            // Auto-generate first joke
             setTimeout(() => {
                 getJoke();
             }, 1500);
+            
+            // Add favorites link to navbar
+            const navLinks = document.querySelector('.nav-links');
+            const favoritesLink = document.createElement('a');
+            favoritesLink.href = '#';
+            favoritesLink.innerHTML = '<i class="fas fa-heart"></i> Favorites';
+            favoritesLink.onclick = showFavorites;
+            navLinks.appendChild(favoritesLink);
         });
 
-        // Add smooth scrolling
+        // Smooth scrolling
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth'
-                    });
+                    target.scrollIntoView({ behavior: 'smooth' });
                 }
             });
         });
 
-        // Add keyboard shortcuts
+        // Keyboard shortcuts
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' || e.key === ' ') {
                 if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
@@ -1503,9 +1278,19 @@ Your trust matters to us. We're committed to transparency and user privacy prote
                     getJoke();
                 }
             }
+            
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c' && currentJoke) {
+                e.preventDefault();
+                copyJoke();
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && e.key === 's' && currentJoke) {
+                e.preventDefault();
+                shareJoke();
+            }
         });
 
-        // Add button click effects
+        // Button click effects
         document.querySelectorAll('button').forEach(button => {
             button.addEventListener('click', function() {
                 this.style.transform = 'scale(0.95)';
