@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JokeAPI - Random Jokes Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            flex: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .category-section {
+            margin-bottom: 20px;
+        }
+
+        .category-section label {
+            font-weight: bold;
+            color: #333;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .category-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .category-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .category-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .get-joke-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .get-joke-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .get-joke-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .joke-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 600px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .joke-content {
+            text-align: center;
+        }
+
+        .joke-text {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .joke-category {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-section {
+            margin-bottom: 30px;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 20px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .controls {
+                padding: 20px;
+            }
+            
+            .categories {
+                justify-content: center;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 JokeAPI</h1>
+            <p>Generate random jokes from various categories!</p>
+            <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 10px; margin-top: 15px; font-size: 0.9em;">
+                <p>✨ <strong>API Status:</strong> Using JokeAPI v2 with backup jokes for reliability</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="category-section">
+                <label>Pilih Kategori:</label>
+                <div class="categories">
+                    <button class="category-btn active" data-category="Any">🎲 Random</button>
+                    <button class="category-btn" data-category="Programming">💻 Programming</button>
+                    <button class="category-btn" data-category="Misc">🎪 General</button>
+                    <button class="category-btn" data-category="Dark">🌙 Dark</button>
+                    <button class="category-btn" data-category="Pun">😄 Pun</button>
+                    <button class="category-btn" data-category="Spooky">👻 Spooky</button>
+                    <button class="category-btn" data-category="Christmas">🎄 Christmas</button>
+                </div>
+            </div>
+            <button class="get-joke-btn" onclick="getJoke()">
+                Get New Joke! 😂
+            </button>
+        </div>
+
+        <div class="joke-container">
+            <div class="joke-content">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading joke...
+                </div>
+                <div class="joke-text">
+                    Klik tombol "Get New Joke" untuk mendapatkan joke random! 🎯
+                </div>
+                <div class="joke-category" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>JokeAPI Generator</h3>
+                <p>Powered by JokeAPI v2 - Bringing laughter to developers and everyone!</p>
+            </div>
+            
+            <div class="footer-links">
+                <a href="https://joke.vinnesia.my.id" target="_blank">🏠 Home</a>
+                <a href="https://v2.jokeapi.dev/" target="_blank">📚 JokeAPI Docs</a>
+                <a href="mailto:contact@vinnesia.my.id">📧 Contact</a>
+                <a href="#" onclick="showAbout()">ℹ️ About</a>
+                <a href="#" onclick="showPrivacy()">🔒 Privacy</a>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy;Vin Nesia All rights reserved</p>
+                <p>JokeAPI by <a href="https://v2.jokeapi.dev" target="_blank" style="color: #fff;">Sv443</a> | 
+                   Website by <a href="https://vinnesia.my.id" target="_blank" style="color: #fff;">Vinnesia</a></p>
+                <p style="margin-top: 10px; font-size: 0.8em;">
+                    Made with ❤️ for developers and joke enthusiasts worldwide
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let selectedCategory = 'Any';
+        
+        // Category button selection
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedCategory = this.dataset.category;
+            });
+        });
+
+        async function getJoke() {
+            const jokeText = document.querySelector('.joke-text');
+            const jokeCategory = document.querySelector('.joke-category');
+            const loading = document.querySelector('.loading');
+            const getJokeBtn = document.querySelector('.get-joke-btn');
+            
+            // Show loading state
+            jokeText.style.display = 'none';
+            jokeCategory.style.display = 'none';
+            loading.style.display = 'block';
+            getJokeBtn.disabled = true;
+            getJokeBtn.textContent = 'Loading...';
+            
+            try {
+                // Try multiple methods and endpoints
+                let response;
+                let jokeData;
+                
+                // Method 1: Direct API call with CORS headers
+                try {
+                    response = await fetch(`https://v2.jokeapi.dev/joke/${selectedCategory}?blacklistFlags=nsfw,religious,political,racist,sexist,explicit&format=json`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                        mode: 'cors'
+                    });
+                    
+                    if (response.ok) {
+                        jokeData = await response.json();
+                    } else {
+                        throw new Error('API response not ok');
+                    }
+                } catch (corsError) {
+                    console.log('CORS method failed, trying alternative...');
+                    
+                    // Method 2: Try with different endpoint format
+                    try {
+                        response = await fetch(`https://v2.jokeapi.dev/joke/${selectedCategory}?format=json&blacklistFlags=nsfw,religious,political,racist,sexist,explicit&safe-mode`);
+                        
+                        if (response.ok) {
+                            jokeData = await response.json();
+                        } else {
+                            throw new Error('Alternative API failed');
+                        }
+                    } catch (altError) {
+                        // Method 3: Use backup jokes if API fails
+                        console.log('API unavailable, using backup jokes...');
+                        jokeData = getBackupJoke();
+                    }
+                }
+                
+                // Display joke
+                let jokeContent = '';
+                if (jokeData.type === 'single') {
+                    jokeContent = jokeData.joke;
+                } else if (jokeData.setup && jokeData.delivery) {
+                    jokeContent = `${jokeData.setup}\n\n${jokeData.delivery}`;
+                } else {
+                    jokeContent = jokeData.joke || jokeData.content;
+                }
+                
+                jokeText.textContent = jokeContent;
+                jokeCategory.textContent = jokeData.category || selectedCategory;
+                
+                // Show content
+                loading.style.display = 'none';
+                jokeText.style.display = 'block';
+                jokeCategory.style.display = 'inline-block';
+                
+            } catch (error) {
+                console.error('All methods failed:', error);
+                
+                // Show backup joke
+                const backupJoke = getBackupJoke();
+                jokeText.textContent = backupJoke.joke;
+                jokeCategory.textContent = backupJoke.category;
+                
+                loading.style.display = 'none';
+                jokeText.style.display = 'block';
+                jokeCategory.style.display = 'inline-block';
+            } finally {
+                getJokeBtn.disabled = false;
+                getJokeBtn.textContent = 'Get New Joke! 😂';
+            }
+        }
+
+        function getBackupJoke() {
+            const backupJokes = {
+                'Programming': [
+                    { joke: "Why do programmers prefer dark mode? Because light attracts bugs! 🐛", category: "Programming" },
+                    { joke: "There are only 10 types of people in the world: those who understand binary and those who don't.", category: "Programming" },
+                    { joke: "Why did the programmer quit his job? He didn't get arrays! 💰", category: "Programming" },
+                    { joke: "How many programmers does it take to change a light bulb? None, that's a hardware problem!", category: "Programming" },
+                    { setup: "Why do Java developers wear glasses?", delivery: "Because they can't C#! 👓", category: "Programming" }
+                ],
+                'Misc': [
+                    { joke: "Why don't scientists trust atoms? Because they make up everything! ⚛️", category: "General" },
+                    { joke: "I told my wife she was drawing her eyebrows too high. She looked surprised! 😮", category: "General" },
+                    { joke: "Why don't eggs tell jokes? They'd crack each other up! 🥚", category: "General" },
+                    { joke: "What do you call a fake noodle? An impasta! 🍝", category: "General" }
+                ],
+                'Dark': [
+                    { joke: "I have a joke about death, but it's dead on arrival. ⚰️", category: "Dark" },
+                    { joke: "My therapist says I have a preoccupation with vengeance. We'll see about that! 😈", category: "Dark" },
+                    { joke: "I used to hate facial hair, but then it grew on me. 🧔", category: "Dark" }
+                ],
+                'Pun': [
+                    { joke: "I wondered why the baseball was getting bigger. Then it hit me! ⚾", category: "Pun" },
+                    { joke: "Did you hear about the mathematician who's afraid of negative numbers? He'll stop at nothing to avoid them! ➖", category: "Pun" },
+                    { joke: "I'm reading a book about anti-gravity. It's impossible to put down! 📚", category: "Pun" }
+                ]
+            };
+            
+            const categoryJokes = backupJokes[selectedCategory] || backupJokes['Misc'];
+            const randomJoke = categoryJokes[Math.floor(Math.random() * categoryJokes.length)];
+            
+            if (randomJoke.setup && randomJoke.delivery) {
+                return {
+                    type: 'twopart',
+                    joke: `${randomJoke.setup}\n\n${randomJoke.delivery}`,
+                    category: randomJoke.category
+                };
+            }
+            
+            return {
+                type: 'single',
+                joke: randomJoke.joke,
+                category: randomJoke.category
+            };
+        }
+
+        function showAbout() {
+            alert('JokeAPI Generator\n\nThis website uses the free JokeAPI v2 to provide random jokes from various categories. Perfect for developers who need a quick laugh during coding sessions!\n\nFeatures:\n- Multiple joke categories\n- Clean and modern interface\n- Mobile responsive design\n- Safe content filtering');
+        }
+
+        function showPrivacy() {
+            alert('Privacy Policy\n\nThis website:\n- Does not collect personal data\n- Does not use cookies for tracking\n- May log anonymous usage statistics\n- Connects to JokeAPI for joke content\n\nFor questions, contact: contact@vinnesia.my.id');
+        }
+
+        // Load initial joke
+        window.onload = function() {
+            setTimeout(getJoke, 1000);
+        };
+    </script>
+</body>
+</html>
